@@ -18,7 +18,7 @@ REGEX_SOLUTION_PROJECTS = /Project\(\"(?<solution_id>[^\"]*)\"\) = \"(?<project_
 REGEX_SOLUTION_GLOBAL_SOLUTION_CONFIG_START = /GlobalSection\(SolutionConfigurationPlatforms\) = preSolution/i
 REGEX_SOLUTION_GLOBAL_SOLUTION_CONFIG = /^\s*(?<config>[^|]*)\|(?<platform>[^|]*) =/i
 REGEX_SOLUTION_GLOBAL_PROJECT_CONFIG_START = /GlobalSection\(ProjectConfigurationPlatforms\) = postSolution/i
-REGEX_SOLUTION_GLOBAL_PROJECT_CONFIG = /(?<project_id>{[^}]*}).(?<config>(\w|\s)*)\|(?<platform>(\w|\s)*).* = (?<mapped_config>(\w|\s)*)\|(?<mapped_platform>(\w|\s)*)/i
+REGEX_SOLUTION_GLOBAL_PROJECT_CONFIG = /(?<project_id>{[^}]*}).(?<config>(\w|\s)*)\|(?<platform>(\w|\s)*)\.Build.* = (?<mapped_config>(\w|\s)*)\|(?<mapped_platform>(\w|\s)*)/i
 REGEX_SOLUTION_GLOBAL_CONFIG_END = /EndGlobalSection/i
 
 REGEX_PROJECT_GUID = /<ProjectGuid>(?<project_id>.*)<\/ProjectGuid>/i
@@ -75,8 +75,10 @@ class Analyzer
         when 'ios'
           next unless project_type_filter.include? 'ios'
           next unless project[:output_type].eql?('exe')
-
-          raise "No configuration mapping found for (#{configuration}) in project #{project[:name]}" unless project_configuration
+          unless project_configuration
+            puts "Skipping: No configuration mapping found for (#{configuration}) in project #{project[:name]}"
+            next
+          end
 
           archs = project[:configs][project_configuration][:mtouch_arch]
           generate_archive = archs && archs.select { |x| x.downcase.start_with? 'arm' }.count == archs.count
@@ -91,9 +93,10 @@ class Analyzer
         when 'android'
           next unless project_type_filter.include? 'android'
           next unless project[:android_application]
-
-          raise "No configuration mapping found for (#{configuration}) in project #{project[:name]}" unless project_configuration
-
+          unless project_configuration
+            puts "Skipping: No configuration mapping found for (#{configuration}) in project #{project[:name]}"
+            next
+          end
           sign_android = project[:configs][project_configuration][:sign_android]
 
           build_commands << [
@@ -128,8 +131,10 @@ class Analyzer
       project_configuration = project[:mappings][configuration]
 
       next unless project[:api] == 'uitest'
-
-      raise "No configuration mapping found for (#{configuration}) in project #{project[:name]}" unless project_configuration
+      unless project_configuration
+        puts "Skipping: No configuration mapping found for (#{configuration}) in project #{project[:name]}"
+        next
+      end
 
       build_command = [
           MDTOOL_PATH,
@@ -233,17 +238,6 @@ class Analyzer
 
             (outputs_hash[project[:id]][:uitests] ||= []) << test_full_output_path
           end
-        # when 'uitest'
-        #   next unless project_configuration
-        #
-        #   project_path = project[:path]
-        #   project_dir = File.dirname(project_path)
-        #   rel_output_dir = project[:configs][project_configuration][:output_path]
-        #   full_output_dir = File.join(project_dir, rel_output_dir)
-        #
-        #   full_output_path = export_artifact(project[:assembly_name], full_output_dir, '.dll')
-        #
-        #   outputs_hash[:dll] = full_output_path
         else
           next
       end
