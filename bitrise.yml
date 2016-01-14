@@ -3,13 +3,18 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
+  - $BITRISE_SOURCE_DIR: $$BITRISE_SOURCE_DIR
+
   - XAMARIN_PROJECT: $XAMARIN_PROJECT
   - BITRISE_XAMARIN_CONFIGURATION: $BITRISE_XAMARIN_CONFIGURATION
   - BITRISE_XAMARIN_PLATFORM: $BITRISE_XAMARIN_PLATFORM
+  - TEST_TO_RUN: $TEST_TO_RUN
+
   - SIMULATOR_DEVICE: $SIMULATOR_DEVICE
   - SIMULATOR_OS_VERSION: $SIMULATOR_OS_VERSION
-  - TEST_TO_RUN: $TEST_TO_RUN
-  - $BITRISE_SOURCE_DIR: $$BITRISE_SOURCE_DIR
+  - EMULATOR_SERIAL: $EMULATOR_SERIAL
+
+
 
 workflows:
   test:
@@ -25,8 +30,8 @@ workflows:
         - xamarin_project: $XAMARIN_PROJECT
         - xamarin_configuration: $BITRISE_XAMARIN_CONFIGURATION
         - xamarin_platform: $BITRISE_XAMARIN_PLATFORM
-        - is_clean_build: yes
         - test_to_run: $TEST_TO_RUN
+        - emulator_serial: $BITRISE_EMULATOR_SERIAL
         - simulator_device: $SIMULATOR_DEVICE
         - simulator_os_version: $SIMULATOR_OS_VERSION
     - script:
